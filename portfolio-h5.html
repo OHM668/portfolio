@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>慕永康 - 个人简历</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #1e293b;
+    --sub: #64748b;
+    --blue: #2563eb;
+    --blue-light: #3b82f6;
+    --blue-bg: #eff6ff;
+    --cyan: #0891b2;
+    --grad1: #2563eb;
+    --grad2: #7c3aed;
+    --shadow: 0 4px 24px rgba(0,0,0,.06);
+    --radius: 16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;font-size:16px}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
+    background:var(--bg);color:var(--text);
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  /* ── Scroll Container ── */
+  .app{
+    height:100vh;height:100dvh;
+    overflow-y:scroll;
+    scroll-snap-type:y mandatory;
+    -webkit-overflow-scrolling:touch;
+  }
+  .app::-webkit-scrollbar{display:none}
+
+  /* ── Page ── */
+  .page{
+    min-height:100vh;min-height:100dvh;
+    scroll-snap-align:start;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:40px 24px;
+    position:relative;
+  }
+
+  /* ── Nav Dots ── */
+  .dots{
+    position:fixed;right:16px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:10px;z-index:100;
+  }
+  .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:#cbd5e1;transition:all .3s;cursor:pointer;
+  }
+  .dot.active{background:var(--blue);transform:scale(1.4);box-shadow:0 0 8px rgba(37,99,235,.4)}
+
+  /* ── PAGE 1: Home ── */
+  .page-home{
+    background:linear-gradient(160deg,#0f172a 0%,#1e293b 40%,#1e3a5f 100%);
+    color:#fff;align-items:center;text-align:center;justify-content:center;gap:24px;
+  }
+  .avatar{
+    width:88px;height:88px;border-radius:50%;
+    background:linear-gradient(135deg,var(--grad1),var(--grad2));
+    display:flex;align-items:center;justify-content:center;
+    font-size:36px;font-weight:700;color:#fff;
+    box-shadow:0 8px 32px rgba(37,99,235,.3);
+    animation:float 3s ease-in-out infinite;
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .home-name{font-size:32px;font-weight:800;letter-spacing:2px}
+  .home-tagline{font-size:15px;color:#94a3b8;letter-spacing:1px}
+  .home-badge{
+    display:inline-block;padding:6px 18px;
+    border:1px solid rgba(255,255,255,.2);border-radius:20px;
+    font-size:13px;color:#93c5fd;margin-top:4px;
+  }
+  .scroll-hint{
+    position:absolute;bottom:36px;display:flex;flex-direction:column;align-items:center;gap:6px;
+    animation:bounce 2s infinite;color:rgba(255,255,255,.4);font-size:12px;
+  }
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+  .scroll-hint span{font-size:20px}
+
+  /* ── PAGE 2: About ── */
+  .page-about{background:var(--bg)}
+  .info-card{
+    background:var(--card);border-radius:var(--radius);padding:24px;
+    box-shadow:var(--shadow);margin-bottom:16px;
+  }
+  .info-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 0;border-bottom:1px solid #f1f5f9;
+  }
+  .info-row:last-child{border:none}
+  .info-label{color:var(--sub);font-size:14px}
+  .info-value{font-weight:600;font-size:14px}
+  .edu-block{margin-top:8px}
+  .edu-school{font-weight:700;font-size:16px}
+  .edu-detail{color:var(--sub);font-size:13px;margin-top:2px}
+  .award-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#fef3c7;color:#92400e;padding:6px 12px;border-radius:8px;
+    font-size:13px;font-weight:600;margin-top:8px;
+  }
+
+  /* ── PAGE 3: Skills ── */
+  .skills-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  .skill-card{
+    background:var(--card);border-radius:var(--radius);padding:18px 14px;
+    box-shadow:var(--shadow);text-align:center;
+    transition:transform .2s,box-shadow .2s;cursor:pointer;
+    position:relative;overflow:hidden;
+  }
+  .skill-card:active{transform:scale(.96);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .skill-icon{
+    font-size:28px;margin-bottom:6px;display:block;
+    transition:transform .3s;
+  }
+  .skill-card:active .skill-icon{transform:rotate(10deg) scale(1.1)}
+  .skill-name{font-weight:700;font-size:13px;margin-bottom:2px}
+  .skill-desc{color:var(--sub);font-size:11px;line-height:1.5}
+  .skill-card .ripple{
+    position:absolute;border-radius:50%;
+    background:rgba(37,99,235,.15);
+    transform:scale(0);animation:ripple .6s ease-out;pointer-events:none;
+  }
+  @keyframes ripple{to{transform:scale(4);opacity:0}}
+
+  /* ── PAGE 4-6: Projects ── */
+  .project-card{
+    background:var(--card);border-radius:var(--radius);padding:20px;
+    box-shadow:var(--shadow);margin-bottom:12px;
+    cursor:pointer;transition:all .25s;
+    border-left:4px solid transparent;
+  }
+  .project-card.active{border-left-color:var(--blue)}
+  .project-card:active{transform:scale(.98)}
+  .project-top{
+    display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;
+  }
+  .project-name{font-weight:700;font-size:16px}
+  .project-date{font-size:12px;color:var(--sub)}
+  .project-badge{
+    display:inline-block;background:var(--blue-bg);color:var(--blue);
+    padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;margin-bottom:8px;
+  }
+  .project-desc{font-size:13px;color:var(--sub);line-height:1.7;margin-bottom:8px}
+  .project-detail{
+    max-height:0;overflow:hidden;transition:max-height .4s ease;
+  }
+  .project-detail.open{max-height:500px}
+  .project-detail li{
+    font-size:12px;color:#475569;line-height:1.8;padding-left:16px;position:relative;
+  }
+  .project-detail li::before{
+    content:"▸";position:absolute;left:0;color:var(--blue);font-size:10px;
+  }
+  .expand-hint{font-size:12px;color:var(--blue);text-align:center;margin-top:6px}
+
+  /* ── PAGE 7: Contact ── */
+  .page-contact{
+    background:linear-gradient(160deg,#0f172a 0%,#1e293b 60%,#1e3a5f 100%);
+    color:#fff;text-align:center;gap:20px;justify-content:center;align-items:center;
+  }
+  .contact-item{
+    display:flex;align-items:center;gap:10px;font-size:15px;
+    padding:12px 24px;background:rgba(255,255,255,.06);
+    border-radius:12px;width:100%;max-width:280px;justify-content:center;
+  }
+  .eval-text{
+    font-size:13px;color:#cbd5e1;line-height:1.8;max-width:300px;text-align:left;
+  }
+  .cta-btn{
+    display:inline-block;padding:12px 32px;
+    background:linear-gradient(135deg,var(--grad1),var(--grad2));
+    color:#fff;border-radius:24px;font-weight:600;font-size:15px;
+    text-decoration:none;box-shadow:0 4px 16px rgba(37,99,235,.3);
+    transition:transform .2s,box-shadow .2s;
+  }
+  .cta-btn:active{transform:scale(.96);box-shadow:0 2px 8px rgba(37,99,235,.2)}
+
+  /* ── Section Title ── */
+  .sec-title{
+    font-size:22px;font-weight:800;margin-bottom:20px;color:var(--text);
+    display:flex;align-items:center;gap:8px;
+  }
+  .sec-title::before{
+    content:"";display:inline-block;width:4px;height:22px;
+    background:var(--grad1);border-radius:2px;
+  }
+  .sec-sub{font-size:13px;color:var(--sub);margin-bottom:16px;margin-top:-12px}
+
+  /* ── Animations ── */
+  .fade-up{
+    opacity:0;transform:translateY(24px);
+    animation:fadeUp .6s ease forwards;
+  }
+  @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+  .d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.4s}.d5{animation-delay:.5s}
+
+  /* ── Page indicator bar ── */
+  .progress-bar{
+    position:fixed;top:0;left:0;height:3px;
+    background:linear-gradient(90deg,var(--grad1),var(--grad2));
+    z-index:101;transition:width .3s;border-radius:0 2px 2px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<nav class="dots" id="navDots"></nav>
+
+<div class="app" id="app">
+
+  <!-- ═══ PAGE 1: 首页 ═══ -->
+  <section class="page page-home" data-index="0">
+    <div class="avatar fade-up d1">慕</div>
+    <h1 class="home-name fade-up d2">慕永康</h1>
+    <p class="home-tagline fade-up d3">虚拟现实技术 · 大二在读</p>
+    <span class="home-badge fade-up d4">Unity / C# / VR 开发</span>
+    <div class="scroll-hint"><span>↓</span> 向上滑动</div>
+  </section>
+
+  <!-- ═══ PAGE 2: 基本信息 ═══ -->
+  <section class="page page-about" data-index="1">
+    <div class="sec-title fade-up d1">基本信息</div>
+    <div class="info-card fade-up d2">
+      <div class="info-row"><span class="info-label">姓名</span><span class="info-value">慕永康</span></div>
+      <div class="info-row"><span class="info-label">手机</span><span class="info-value">17392021767</span></div>
+      <div class="info-row"><span class="info-label">邮箱</span><span class="info-value">994514958@qq.com</span></div>
+      <div class="info-row"><span class="info-label">出生年月</span><span class="info-value">2006.03</span></div>
+    </div>
+    <div class="info-card fade-up d3">
+      <div class="edu-school">桂林信息科技学院</div>
+      <div class="edu-detail">虚拟现实技术 · 本科 · 2024.09 - 2028.06（预计）</div>
+      <div class="edu-detail">主修：C#程序设计 / Unity3D开发 / 计算机图形学 / 数据结构与算法</div>
+    </div>
+    <div class="award-tag fade-up d4">🏆 蓝桥杯 C/C++ 省级三等奖 · 2026</div>
+  </section>
+
+  <!-- ═══ PAGE 3: 专业技能 ═══ -->
+  <section class="page" data-index="2">
+    <div class="sec-title fade-up d1">专业技能</div>
+    <div class="sec-sub fade-up d2">点击卡片查看详情 · 各方向技术栈</div>
+    <div class="skills-grid fade-up d3" id="skillsGrid">
+      <div class="skill-card" data-skill="引擎：Unity 2022~2023+ / URP / UGUI">
+        <span class="skill-icon">🎮</span>
+        <div class="skill-name">游戏引擎</div>
+        <div class="skill-desc">Unity · URP · UGUI</div>
+      </div>
+      <div class="skill-card" data-skill="语言：C#（主力）/ C/C++ / 熟悉OOP,反射,协程,泛型">
+        <span class="skill-icon">💻</span>
+        <div class="skill-name">编程语言</div>
+        <div class="skill-desc">C# · C/C++ · OOP</div>
+      </div>
+      <div class="skill-card" data-skill="VR：XR Interaction Toolkit 2.6 / OpenXR / 空间交互">
+        <span class="skill-icon">🥽</span>
+        <div class="skill-name">VR/XR 开发</div>
+        <div class="skill-desc">XR Toolkit · OpenXR</div>
+      </div>
+      <div class="skill-card" data-skill="架构：程序集分层 / 事件总线 / ScriptableObject数据驱动 / 对象池">
+        <span class="skill-icon">🏗️</span>
+        <div class="skill-name">架构设计</div>
+        <div class="skill-desc">分层 · 事件总线 · SO</div>
+      </div>
+      <div class="skill-card" data-skill="渲染：URP管线配置 / 实时光照调试 / Shader基础">
+        <span class="skill-icon">✨</span>
+        <div class="skill-name">渲染图形</div>
+        <div class="skill-desc">URP · Shader · 光照</div>
+      </div>
+      <div class="skill-card" data-skill="数据库：MySQL / ADO.NET / 事务与行级锁">
+        <span class="skill-icon">🗄️</span>
+        <div class="skill-name">数据库</div>
+        <div class="skill-desc">MySQL · 事务 · 并发</div>
+      </div>
+    </div>
+    <!-- Toast -->
+    <div id="skillToast" style="
+      position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);
+      background:#1e293b;color:#fff;padding:10px 20px;border-radius:20px;
+      font-size:13px;opacity:0;transition:all .3s;pointer-events:none;z-index:200;
+      white-space:nowrap;
+    "></div>
+  </section>
+
+  <!-- ═══ PAGE 4: 项目 - 模块化塔防 ═══ -->
+  <section class="page" data-index="3">
+    <div class="sec-title fade-up d1">项目经历 ①</div>
+    <div class="project-card fade-up d2" onclick="toggleProject(this)">
+      <div class="project-top">
+        <span class="project-name">模块化塔防</span>
+        <span class="project-date">2026.04 - 2026.06</span>
+      </div>
+      <span class="project-badge">Unity C# + URP</span>
+      <p class="project-desc">
+        独立开发。核心创新——「乐高式炮塔组装」：底座、武器、增效器三层自由搭配。包含工坊设计、蓝图管理、科技树、关卡战斗的完整循环。
+      </p>
+      <ul class="project-detail">
+        <li>炮塔组装：三层嵌套，9种增效器（溅射/弹射/冰冻/击退等），运行时装卸重组</li>
+        <li>自研统一拖拽框架，同时驱动UI拖拽和3D世界拖拽，含预览与合法性反馈</li>
+        <li>波次系统：7状态状态机，多组敌人并行生成，提前开战奖励机制</li>
+        <li>6层程序集隔离 + 事件总线(25+事件)解耦，ScriptableObject全数据驱动</li>
+        <li>对象池管理敌人与弹丸，降低GC压力</li>
+      </ul>
+      <div class="expand-hint">点击查看详情</div>
+    </div>
+
+    <!-- Project 卡片预留位置，给第二页项目做预告 -->
+    <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--sub)">↑ 继续滑动查看下一个项目 ↑</div>
+  </section>
+
+  <!-- ═══ PAGE 5: 项目 - 教室VR ═══ -->
+  <section class="page" data-index="4">
+    <div class="sec-title fade-up d1">项目经历 ②</div>
+    <div class="project-card fade-up d2" onclick="toggleProject(this)">
+      <div class="project-top">
+        <span class="project-name">教室VR交互系统</span>
+        <span class="project-date">2026.05 - 2026.06</span>
+      </div>
+      <span class="project-badge">Unity URP + XR Interaction Toolkit 2.6</span>
+      <p class="project-desc">
+        基于 Unity 2022.3 URP 与 XR Interaction Toolkit 开发。支持VR手柄自由移动、物理投掷交互、顺序放置引导及实时光照控制。
+      </p>
+      <ul class="project-detail">
+        <li>阶段性顺序放置引导：SequenceSpawner + SocketMatcher + 公告板箭头指示器</li>
+        <li>纸团物理系统：Rigidbody模拟 + XR Grab Interactable手柄交互 + 自动回收</li>
+        <li>XR Interaction Layer位掩码隔离两套交互系统，不修改引擎底层解决冲突</li>
+        <li>URP光照排查：AreaLight仅烘焙 → 改用多点SpotLight阵列模拟灯管发光</li>
+      </ul>
+      <div class="expand-hint">点击查看详情</div>
+    </div>
+    <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--sub)">↑ 继续滑动查看下一个项目 ↑</div>
+  </section>
+
+  <!-- ═══ PAGE 6: 项目 - 博物馆 ═══ -->
+  <section class="page" data-index="5">
+    <div class="sec-title fade-up d1">项目经历 ③</div>
+    <div class="project-card fade-up d2" onclick="toggleProject(this)">
+      <div class="project-top">
+        <span class="project-name">文化遗迹数字博物馆</span>
+        <span class="project-date">2025.10 - 2025.11</span>
+      </div>
+      <span class="project-badge">Unity3D + UGUI</span>
+      <p class="project-desc">
+        沉浸式3D虚拟博物馆，角色探索、文物展览、交互鉴赏与拼图解谜的完整体验闭环，支持4K分辨率。
+      </p>
+      <ul class="project-detail">
+        <li>第三人称角色控制（BlendTree动画混合）+ 类原神传送系统（协程动画链）</li>
+        <li>文物拼图解谜：三档难度(3×3/4×4/5×5)，程序化切割+拖拽吸附，解锁3D模型</li>
+        <li>22+件中国文物3D展示，拖拽旋转+滚轮缩放+音频解说动态切换</li>
+      </ul>
+      <div class="expand-hint">点击查看详情</div>
+    </div>
+    <div class="project-card fade-up d3" onclick="toggleProject(this)">
+      <div class="project-top">
+        <span class="project-name">勇者集市</span>
+        <span class="project-date">2026.04 - 2026.05</span>
+      </div>
+      <span class="project-badge">C# WinForms + MySQL</span>
+      <p class="project-desc">
+        游戏道具交易平台。商城、拍卖行、抽奖、背包等7大模块，支持多玩家并发交易。
+      </p>
+      <ul class="project-detail">
+        <li>数据库事务+行级锁防并发超卖；三层架构分离关注点</li>
+        <li>反射实现通用DataRow→Entity映射；带保底机制的权重随机抽奖算法</li>
+      </ul>
+      <div class="expand-hint">点击查看详情</div>
+    </div>
+  </section>
+
+  <!-- ═══ PAGE 7: 结尾 - 联系我 ═══ -->
+  <section class="page page-contact" data-index="6">
+    <div class="avatar fade-up d1" style="width:72px;height:72px;font-size:28px">慕</div>
+    <h2 class="fade-up d2" style="font-size:24px">期待与你共事</h2>
+    <p class="fade-up d3" style="color:#94a3b8;font-size:14px">Unity客户端开发 / VR开发 / 游戏开发</p>
+    <div class="contact-item fade-up d3">📧 994514958@qq.com</div>
+    <div class="contact-item fade-up d4">📱 17392021767</div>
+    <div style="margin-top:8px;max-width:300px" class="fade-up d5">
+      <p class="eval-text">
+        <strong>自我评价：</strong><br>
+        大二期间独立完成4个完整项目，覆盖VR交互、3D游戏、虚拟展馆、C/S架构交易平台。善于排查底层技术问题，具备扎实的代码架构意识和自学能力。
+      </p>
+    </div>
+    <a class="cta-btn fade-up d5" href="mailto:994514958@qq.com">📩 发送邮件联系</a>
+    <p style="font-size:11px;color:#64748b;margin-top:8px" class="fade-up d5">期待您的联系 · 随时到岗</p>
+  </section>
+
+</div>
+
+<script>
+// ══════════════════════════════
+// 1. Navigation Dots + Scroll Progress
+// ══════════════════════════════
+const app = document.getElementById('app');
+const pages = document.querySelectorAll('.page');
+const dots = document.getElementById('navDots');
+const progress = document.getElementById('progressBar');
+const total = pages.length;
+
+// Create dots
+for(let i=0;i<total;i++){
+  const d = document.createElement('span');
+  d.className='dot'+(i===0?' active':'');
+  d.onclick=()=>pages[i].scrollIntoView({behavior:'smooth'});
+  dots.appendChild(d);
+}
+
+// Scroll tracking (debounced)
+let scrollTicking = false;
+app.addEventListener('scroll',()=>{
+  if(!scrollTicking){
+    requestAnimationFrame(()=>{
+      updateProgress();
+      scrollTicking=false;
+    });
+    scrollTicking=true;
+  }
+});
+
+function updateProgress(){
+  const st = app.scrollTop;
+  const hh = app.clientHeight;
+  let idx = Math.round(st / hh);
+  if(idx<0)idx=0;if(idx>=total)idx=total-1;
+
+  // Update dots
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+
+  // Update progress bar
+  const totalScroll = (total-1)*hh;
+  const pct = totalScroll>0 ? Math.min(100,(st/totalScroll)*100) : 0;
+  progress.style.width = pct+'%';
+
+  // Animate elements on current page
+  pages[idx].querySelectorAll('.fade-up').forEach(el=>{
+    el.style.animation='none';el.offsetHeight;el.style.animation='';
+  });
+}
+
+// ══════════════════════════════
+// 2. Project Card - Expand/Collapse
+// ══════════════════════════════
+function toggleProject(card){
+  const detail = card.querySelector('.project-detail');
+  const hint = card.querySelector('.expand-hint');
+  const isOpen = detail.classList.contains('open');
+
+  // Close all others
+  document.querySelectorAll('.project-detail.open').forEach(d=>{
+    if(d!==detail){d.classList.remove('open');d.parentElement.classList.remove('active');
+      d.parentElement.querySelector('.expand-hint').textContent='点击查看详情';}
+  });
+
+  if(isOpen){
+    detail.classList.remove('open');
+    card.classList.remove('active');
+    hint.textContent='点击查看详情';
+  } else {
+    detail.classList.add('open');
+    card.classList.add('active');
+    hint.textContent='收起详情';
+  }
+}
+
+// ══════════════════════════════
+// 3. Skill Card - Ripple + Toast
+// ══════════════════════════════
+const skillToast = document.getElementById('skillToast');
+document.getElementById('skillsGrid').addEventListener('click',function(e){
+  const card = e.target.closest('.skill-card');
+  if(!card)return;
+
+  // Ripple effect
+  const ripple = document.createElement('span');
+  ripple.className='ripple';
+  const rect = card.getBoundingClientRect();
+  const size = Math.max(rect.width,rect.height);
+  ripple.style.width=ripple.style.height=size+'px';
+  ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+  ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+  card.appendChild(ripple);
+  ripple.addEventListener('animationend',()=>ripple.remove());
+
+  // Toast
+  const skill = card.dataset.skill;
+  skillToast.textContent = skill;
+  skillToast.style.opacity='1';
+  skillToast.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(skillToast._t);
+  skillToast._t=setTimeout(()=>{
+    skillToast.style.opacity='0';
+    skillToast.style.transform='translateX(-50%) translateY(20px)';
+  },1800);
+});
+
+// ══════════════════════════════
+// 4. Touch Swipe Detection (horizontal hint)
+// ══════════════════════════════
+let touchY=0;
+app.addEventListener('touchstart',e=>{touchY=e.touches[0].clientY},{passive:true});
+
+// ══════════════════════════════
+// Init
+// ══════════════════════════════
+updateProgress();
+</script>
+</body>
+</html>

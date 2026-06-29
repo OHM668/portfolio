@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>翻牌配对 · 记忆挑战</title>
+<style>
+  :root {
+    --card-size: 70px;
+    --gap: 8px;
+    --bg: #0f172a;
+    --card-back: #1e293b;
+    --card-front: #f8fafc;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --accent: #6366f1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: #e2e8f0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; min-height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .game {
+    width: 100%; max-width: 420px;
+    padding: 16px;
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Screen management ── */
+  .screen { display: none; width: 100%; flex-direction: column; align-items: center; }
+  .screen.active { display: flex; }
+
+  /* ═══ START SCREEN ═══ */
+  .start-icon { font-size: 64px; margin-bottom: 12px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+  .title {
+    font-size: 28px; font-weight: 800; letter-spacing: 1px;
+    background: linear-gradient(135deg, #6366f1, #a78bfa, #f59e0b);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 4px;
+  }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+  .diff-label { font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
+  .diff-group { display: flex; gap: 10px; margin-bottom: 24px; }
+  .diff-btn {
+    padding: 10px 20px; border: 2px solid #334155; border-radius: 12px;
+    background: transparent; color: #cbd5e1; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+  }
+  .diff-btn:active { transform: scale(.95); }
+  .diff-btn.selected { border-color: var(--accent); background: rgba(99,102,241,.15); color: #a5b4fc; }
+
+  .start-btn {
+    padding: 14px 48px; border: none; border-radius: 28px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff; font-size: 16px; font-weight: 700;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(99,102,241,.35);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .start-btn:active { transform: scale(.95); box-shadow: 0 2px 10px rgba(99,102,241,.2); }
+
+  .highscore { margin-top: 16px; font-size: 12px; color: #64748b; }
+  .highscore span { color: var(--gold); font-weight: 600; }
+
+  /* ═══ GAME SCREEN ═══ */
+  .hud {
+    width: 100%; display: flex; justify-content: space-between;
+    padding: 8px 4px; margin-bottom: 12px;
+  }
+  .hud-item { text-align: center; }
+  .hud-val { font-size: 22px; font-weight: 700; }
+  .hud-lbl { font-size: 11px; color: #64748b; }
+  .hud-val.combo { color: var(--gold); transition: transform .15s; }
+  .hud-val.combo.pulse { animation: comboPulse .3s ease; }
+  @keyframes comboPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.4); } }
+
+  .board {
+    display: grid;
+    gap: var(--gap);
+    justify-content: center;
+    perspective: 800px;
+  }
+
+  /* ── Card ── */
+  .card-wrapper {
+    width: var(--card-size); height: var(--card-size);
+    cursor: pointer; position: relative;
+  }
+  .card-wrapper.matched { pointer-events: none; }
+
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .45s cubic-bezier(.4,0,.2,1);
+  }
+  .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute; inset: 0;
+    border-radius: 10px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+
+  .card-back {
+    background: linear-gradient(145deg, #1e293b, #334155);
+    border: 2px solid #475569;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    font-size: 20px; color: #64748b;
+  }
+  .card-back::after {
+    content: "?";
+  }
+
+  .card-front {
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+    transform: rotateY(180deg);
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+
+  /* Match states */
+  .card-wrapper.matched .card-front {
+    background: #d1fae5; border-color: var(--green);
+    box-shadow: 0 0 16px rgba(16,185,129,.35);
+  }
+  .card-wrapper.matched .card-inner { transform: rotateY(180deg); }
+  .card-wrapper.matched .card-face { font-size: 32px; }
+
+  /* Mismatch shake */
+  .card-wrapper.mismatch .card-inner {
+    animation: shake .4s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: rotateY(180deg) translateX(0); }
+    25% { transform: rotateY(180deg) translateX(-6px); }
+    75% { transform: rotateY(180deg) translateX(6px); }
+  }
+
+  /* Score popup */
+  .score-pop {
+    position: fixed;
+    pointer-events: none; z-index: 100;
+    font-weight: 800; font-size: 22px;
+    color: var(--gold);
+    animation: popUp .8s ease-out forwards;
+  }
+  @keyframes popUp {
+    0% { opacity: 1; transform: translate(-50%,0) scale(1); }
+    100% { opacity: 0; transform: translate(-50%,-60px) scale(1.5); }
+  }
+
+  /* ═══ END SCREEN ═══ */
+  .end-icon { font-size: 56px; margin-bottom: 8px; animation: float 2s ease-in-out infinite; }
+  .end-title { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+  .end-score {
+    font-size: 52px; font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), #fbbf24);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin: 8px 0;
+  }
+  .stars { font-size: 36px; margin-bottom: 16px; letter-spacing: 2px; }
+  .stats { width: 100%; max-width: 260px; margin-bottom: 20px; }
+  .stat-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 14px;
+  }
+  .stat-row span:last-child { font-weight: 600; }
+  .end-btns { display: flex; gap: 12px; }
+
+  .retry-btn, .home-btn {
+    padding: 12px 28px; border: none; border-radius: 24px;
+    font-size: 14px; font-weight: 600; cursor: pointer; transition: transform .2s;
+    color: #fff;
+  }
+  .retry-btn {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 16px rgba(99,102,241,.3);
+  }
+  .home-btn {
+    background: #334155;
+  }
+  .retry-btn:active, .home-btn:active { transform: scale(.95); }
+
+  /* ── Confetti (win) ── */
+  .confetti {
+    position: fixed; pointer-events: none; z-index: 99;
+    width: 10px; height: 10px; border-radius: 2px;
+    animation: confettiFall 1.5s ease-in forwards;
+  }
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translateY(-100px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(105vh) rotate(720deg); }
+  }
+
+  /* responsive */
+  @media (max-width:380px) {
+    :root { --card-size: 60px; --gap: 6px; }
+    .card-face { font-size: 26px; }
+    .title { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="game">
+
+  <!-- ═══════ START SCREEN ═══════ -->
+  <div class="screen active" id="startScreen">
+    <div class="start-icon">🧠</div>
+    <h1 class="title">记忆翻牌挑战</h1>
+    <p class="subtitle">记住位置，找出所有配对</p>
+    <p class="diff-label">选择难度</p>
+    <div class="diff-group" id="diffGroup">
+      <button class="diff-btn" data-mode="easy">简单 3×4</button>
+      <button class="diff-btn selected" data-mode="normal">普通 4×4</button>
+      <button class="diff-btn" data-mode="hard">困难 4×5</button>
+    </div>
+    <button class="start-btn" id="startBtn">开始游戏</button>
+    <div class="highscore" id="hsDisplay"></div>
+  </div>
+
+  <!-- ═══════ GAME SCREEN ═══════ -->
+  <div class="screen" id="gameScreen">
+    <div class="hud">
+      <div class="hud-item">
+        <div class="hud-val" id="timer">0s</div>
+        <div class="hud-lbl">用时</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-val" id="moves">0</div>
+        <div class="hud-lbl">步数</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-val combo" id="combo">×1</div>
+        <div class="hud-lbl">连击</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-val" id="score">0</div>
+        <div class="hud-lbl">分数</div>
+      </div>
+    </div>
+    <div class="board" id="board"></div>
+  </div>
+
+  <!-- ═══════ END SCREEN ═══════ -->
+  <div class="screen" id="endScreen">
+    <div class="end-icon">🏆</div>
+    <h2 class="end-title">恭喜过关！</h2>
+    <div class="stars" id="stars">⭐⭐⭐</div>
+    <div class="end-score" id="endScore">0</div>
+    <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">最终得分</p>
+    <div class="stats">
+      <div class="stat-row"><span>⏱ 用时</span><span id="endTime">0s</span></div>
+      <div class="stat-row"><span>👆 步数</span><span id="endMoves">0</span></div>
+      <div class="stat-row"><span>🔥 最高连击</span><span id="endCombo">×1</span></div>
+      <div class="stat-row"><span>🎯 匹配效率</span><span id="endRate">0%</span></div>
+    </div>
+    <div class="end-btns">
+      <button class="home-btn" id="homeBtn">🏠 返回</button>
+      <button class="retry-btn" id="retryBtn">🔄 再来一局</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  GAME ENGINE
+// ═══════════════════════════════════════
+
+const EMOJIS = ['🐶','🐱','🦊','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐰'];
+
+// ── DOM refs ──
+const $ = id => document.getElementById(id);
+const startScreen = $('startScreen');
+const gameScreen  = $('gameScreen');
+const endScreen   = $('endScreen');
+const board       = $('board');
+const timerEl     = $('timer');
+const movesEl     = $('moves');
+const comboEl     = $('combo');
+const scoreEl     = $('score');
+const diffGroup   = $('diffGroup');
+const hsDisplay   = $('hsDisplay');
+
+// ── Config ──
+const MODES = {
+  easy:   { cols: 3, rows: 4, pairs: 6,  label: '3×4', cardSize: 78, gap: 10 },
+  normal: { cols: 4, rows: 4, pairs: 8,  label: '4×4', cardSize: 70, gap: 8  },
+  hard:   { cols: 4, rows: 5, pairs: 10, label: '4×5', cardSize: 66, gap: 6  },
+};
+
+let mode = 'normal';
+let cards = [];           // card data: { id, emoji, index }
+let flippedCards = [];    // currently flipped card indices
+let matchedSet = new Set();
+let moves = 0;
+let score = 0;
+let combo = 0;
+let maxCombo = 0;
+let timerSec = 0;
+let timerInterval = null;
+let gameState = 'idle';   // idle | one_flipped | checking | over
+
+// ── Mode Selection ──
+diffGroup.addEventListener('click', e => {
+  const btn = e.target.closest('.diff-btn');
+  if (!btn) return;
+  diffGroup.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  mode = btn.dataset.mode;
+});
+
+// ── High score persistence ──
+function loadHS() {
+  try { return JSON.parse(localStorage.getItem('memoryHS') || '{}'); } catch(e) { return {}; }
+}
+function saveHS(m, s) {
+  const hs = loadHS();
+  if (!hs[m] || s > hs[m]) { hs[m] = s; localStorage.setItem('memoryHS', JSON.stringify(hs)); }
+  return hs[m];
+}
+function updateHSDisplay() {
+  const hs = loadHS();
+  const best = hs[mode];
+  hsDisplay.innerHTML = best ? `🏅 ${MODES[mode].label} 最高分: <span>${best}</span>` : '';
+}
+updateHSDisplay();
+
+// ── Screen Switching ──
+function showScreen(screen) {
+  [startScreen, gameScreen, endScreen].forEach(s => s.classList.remove('active'));
+  screen.classList.add('active');
+}
+
+// ═══════════════════════════
+//  START GAME
+// ═══════════════════════════
+function startGame() {
+  const cfg = MODES[mode];
+  const pairCount = cfg.pairs;
+  const total = pairCount * 2;
+
+  // Build card data: each emoji appears twice
+  const pool = EMOJIS.slice(0, pairCount);
+  let deck = [];
+  pool.forEach((emoji, id) => {
+    deck.push({ id, emoji });
+    deck.push({ id, emoji });
+  });
+
+  // Shuffle (Fisher-Yates)
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+
+  cards = deck;
+  flippedCards = [];
+  matchedSet.clear();
+  moves = 0;
+  score = 0;
+  combo = 0;
+  maxCombo = 0;
+  timerSec = 0;
+  gameState = 'idle';
+
+  // Update CSS vars
+  document.documentElement.style.setProperty('--card-size', cfg.cardSize + 'px');
+  document.documentElement.style.setProperty('--gap', cfg.gap + 'px');
+
+  // Render board
+  board.style.gridTemplateColumns = `repeat(${cfg.cols}, var(--card-size))`;
+  board.innerHTML = cards.map((c, i) => `
+    <div class="card-wrapper" data-index="${i}" data-id="${c.id}">
+      <div class="card-inner">
+        <div class="card-face card-back"></div>
+        <div class="card-face card-front">${c.emoji}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Update HUD
+  timerEl.textContent = '0s';
+  movesEl.textContent = '0';
+  comboEl.textContent = '×1';
+  scoreEl.textContent = '0';
+
+  showScreen(gameScreen);
+
+  // Start timer
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSec++;
+    timerEl.textContent = timerSec + 's';
+  }, 1000);
+}
+
+// ═══════════════════════════
+//  CARD CLICK (Event Delegation)
+// ═══════════════════════════
+board.addEventListener('click', e => {
+  if (gameState === 'checking' || gameState === 'over') return;
+
+  const wrapper = e.target.closest('.card-wrapper');
+  if (!wrapper) return;
+
+  const idx = parseInt(wrapper.dataset.index);
+
+  // Can't flip: already matched, already flipped, or same card
+  if (matchedSet.has(idx)) return;
+  if (flippedCards.includes(idx)) return;
+  if (flippedCards.length >= 2) return;
+
+  // Flip it
+  wrapper.classList.add('flipped');
+  flippedCards.push(idx);
+
+  if (flippedCards.length === 1) {
+    // First card — just flip
+    gameState = 'one_flipped';
+    moves++;
+    movesEl.textContent = moves;
+  }
+
+  if (flippedCards.length === 2) {
+    // Second card — check match
+    gameState = 'checking';
+    const [a, b] = flippedCards;
+    const wrappers = board.querySelectorAll('.card-wrapper');
+
+    if (cards[a].id === cards[b].id) {
+      // ✅ MATCH
+      setTimeout(() => {
+        wrappers[a].classList.add('matched');
+        wrappers[b].classList.add('matched');
+        matchedSet.add(a);
+        matchedSet.add(b);
+
+        // Combo & score
+        combo++;
+        if (combo > maxCombo) maxCombo = combo;
+        const comboBonus = combo > 1 ? combo : 1;
+        const points = 100 * comboBonus;
+        score += points;
+
+        // Update HUD
+        scoreEl.textContent = score;
+        comboEl.textContent = '×' + combo;
+        comboEl.classList.add('pulse');
+        setTimeout(() => comboEl.classList.remove('pulse'), 300);
+
+        // Score popup
+        spawnScorePopup(wrappers[a], '+' + points);
+
+        flippedCards = [];
+        gameState = 'idle';
+
+        // Win check
+        if (matchedSet.size === cards.length) {
+          endGame();
+        }
+      }, 350);
+
+    } else {
+      // ❌ MISMATCH
+      combo = 0;
+      comboEl.textContent = '×1';
+
+      setTimeout(() => {
+        wrappers[a].classList.add('mismatch');
+        wrappers[b].classList.add('mismatch');
+
+        setTimeout(() => {
+          wrappers[a].classList.remove('flipped', 'mismatch');
+          wrappers[b].classList.remove('flipped', 'mismatch');
+          flippedCards = [];
+          gameState = 'idle';
+        }, 500);
+      }, 500);
+    }
+  }
+});
+
+// ── Score Popup ──
+function spawnScorePopup(wrapper, text) {
+  const rect = wrapper.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'score-pop';
+  el.textContent = text;
+  el.style.left = rect.left + rect.width / 2 + 'px';
+  el.style.top = rect.top + 'px';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+// ═══════════════════════════
+//  END GAME
+// ═══════════════════════════
+function endGame() {
+  gameState = 'over';
+  clearInterval(timerInterval);
+
+  // Time bonus: faster = more points (cap at 60s, 0 bonus after 120s)
+  const cfg = MODES[mode];
+  const totalPairs = cfg.pairs;
+  const timeBonus = Math.max(0, Math.floor((120 - timerSec) * totalPairs * 0.5));
+  score += timeBonus;
+
+  // Final stats
+  const optimalMoves = totalPairs; // absolute minimum
+  const efficiency = Math.min(100, Math.floor((optimalMoves / Math.max(moves, 1)) * 100));
+
+  // Star rating
+  let stars = 1;
+  if (efficiency >= 75) stars = 3;
+  else if (efficiency >= 50) stars = 2;
+
+  const starStr = ['', '⭐', '⭐⭐', '⭐⭐⭐'][stars];
+
+  // Save high score
+  const best = saveHS(mode, score);
+
+  // Update end screen
+  $('stars').textContent = starStr;
+  $('endScore').textContent = score;
+  $('endTime').textContent = timerSec + 's' + (timerSec < 30 ? ' 🚀' : timerSec < 60 ? ' 👍' : '');
+  $('endMoves').textContent = moves + ' 步';
+  $('endCombo').textContent = '×' + maxCombo;
+  $('endRate').textContent = efficiency + '%';
+
+  // Show screen after brief delay
+  setTimeout(() => {
+    showScreen(endScreen);
+    spawnConfetti();
+  }, 600);
+}
+
+// ── Confetti ──
+function spawnConfetti() {
+  const colors = ['#f59e0b','#10b981','#6366f1','#ef4444','#ec4899','#14b8a6','#f97316','#8b5cf6'];
+  for (let i = 0; i < 50; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.style.left = Math.random() * 100 + '%';
+      el.style.top = -(Math.random() * 40 + 10) + 'px';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.width = (Math.random() * 8 + 6) + 'px';
+      el.style.height = (Math.random() * 8 + 6) + 'px';
+      el.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }, i * 25);
+  }
+}
+
+// ── Event: Start button ──
+$('startBtn').addEventListener('click', startGame);
+
+// ── Event: Difficulty changes → update HS display ──
+diffGroup.addEventListener('click', () => {
+  setTimeout(updateHSDisplay, 0);
+});
+
+// ── Events: End screen buttons ──
+$('retryBtn').addEventListener('click', startGame);
+$('homeBtn').addEventListener('click', () => {
+  clearInterval(timerInterval);
+  showScreen(startScreen);
+  updateHSDisplay();
+});
+
+// ── Init ──
+updateHSDisplay();
+</script>
+
+</body>
+</html>
