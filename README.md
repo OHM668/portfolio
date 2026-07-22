@@ -2,12 +2,8 @@
 
 慕永康 | 本科 | 虚拟现实技术
 
-## Web 作品
+[个人简历 H5](portfolio-h5.html)
 
-- [个人简历 H5](portfolio-h5.html)
-- [翻牌配对小游戏](game-memory.html)
-
----
 
 ## 作品演示视频
 
